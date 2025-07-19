@@ -1,7 +1,6 @@
 import React, { useState, MouseEvent } from 'react';
 import axios from 'axios';
-import { saveAs } from 'file-saver';
-import { GeneratePDFRequest } from './types/APIModels';
+import { GeneratePDFRequest, GeneratePDFResponse } from './types/APIModels';
 import { getApiUrl, API_ENDPOINTS } from './config/api';
 
 interface PDFGeneratorProps {
@@ -20,16 +19,16 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ markdown, options, onError,
       onError('Markdown content is empty.', 'PDFGenerator');
       return;
     }
-    
+
     // Start loading state for PDF generation
     onLoadingChange(true, 'pdf-generation');
-    
+
     try {
       const requestData: GeneratePDFRequest = { markdown, options };
-      const response = await axios.post(getApiUrl(API_ENDPOINTS.generatePDF), requestData, {
+      const response = await axios.post<GeneratePDFResponse>(getApiUrl(API_ENDPOINTS.generatePDF), requestData, {
         timeout: 30000, // 30 second timeout for PDF generation
       });
-      
+
       // Check if response contains HTML content
       if (response.data && response.data.success && response.data.htmlContent) {
         // Create a new window/tab with the formatted HTML
@@ -50,11 +49,11 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ markdown, options, onError,
       } else {
         throw new Error('Invalid response format from server');
       }
-      
+
     } catch (err: any) {
       // Enhanced error handling during loading state
       const errorMessage = err?.response?.data?.error || err?.message || 'Failed to generate PDF.';
-      
+
       // Handle specific error scenarios during PDF generation
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
         onError('PDF generation timed out. Please try again with shorter content.', 'PDFGenerator');
