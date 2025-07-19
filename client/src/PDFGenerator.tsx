@@ -81,40 +81,65 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ markdown, options, onError,
   };
 
   return (
-    <div className="pdf-generator mt-6 flex flex-col items-center">
-      <button
-        onClick={handleButtonClick}
-        disabled={isLoading}
-        className={
-          `px-8 py-3 rounded-full font-bold text-lg shadow-xl transition-all duration-200
-          bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white
-          hover:from-indigo-500 hover:to-pink-500 hover:scale-105
-          active:scale-95
-          disabled:opacity-60 disabled:cursor-not-allowed
-          flex items-center gap-3 relative overflow-hidden`
-        }
-      >
-        {ripple && (
-          <span
-            className="absolute bg-white/40 rounded-full pointer-events-none animate-ripple"
-            style={{
-              left: ripple.x - 50,
-              top: ripple.y - 50,
-              width: 100,
-              height: 100,
-            }}
-          />
-        )}
-        {isLoading && (
-          <span className="absolute left-4 flex items-center">
-            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
-          </span>
-        )}
-        {isLoading ? 'Generating PDF...' : 'Download as PDF'}
-      </button>
+    <div className="pdf-generator mt-4 sm:mt-6 flex flex-col items-center w-full">
+      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full max-w-md">
+        <button
+          onClick={handleButtonClick}
+          disabled={isLoading || !markdown.trim()}
+          className={`
+            w-full sm:flex-1 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-full font-bold text-base sm:text-lg shadow-xl transition-all duration-200
+            bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white
+            hover:from-indigo-500 hover:to-pink-500 hover:scale-105 hover:shadow-2xl
+            active:scale-95
+            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+            flex items-center justify-center gap-3 relative overflow-hidden
+            focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800
+          `}
+          aria-label={isLoading ? 'Generating PDF' : 'Generate and download PDF'}
+        >
+          {ripple && (
+            <span
+              className="absolute bg-white/40 rounded-full pointer-events-none animate-ripple"
+              style={{
+                left: ripple.x - 50,
+                top: ripple.y - 50,
+                width: 100,
+                height: 100,
+              }}
+            />
+          )}
+          
+          {isLoading ? (
+            <>
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              <span>Generating PDF...</span>
+            </>
+          ) : (
+            <>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="hidden sm:inline">Download as PDF</span>
+              <span className="sm:hidden">Generate PDF</span>
+            </>
+          )}
+        </button>
+      </div>
+      
+      {!markdown.trim() && (
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center px-4">
+          Add some markdown content above to generate a PDF
+        </p>
+      )}
+      
+      <div className="mt-3 sm:mt-4 text-center">
+        <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500">
+          Your PDF will open in a new tab for download
+        </p>
+      </div>
     </div>
   );
 };
