@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MarkdownInput from './MarkdownInput';
 import MarkdownPreview from './MarkdownPreview';
 import PDFGenerator from './PDFGenerator';
@@ -11,16 +11,57 @@ import { motion } from 'framer-motion';
 const App: React.FC = () => {
   const [markdownContent, setMarkdownContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingOperation, setLoadingOperation] = useState<'pdf-generation' | 'file-processing' | null>(null);
   const [error, setError] = useState<EnhancedError | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const handleMarkdownChange = (value: string) => {
     setMarkdownContent(value);
     setError(null);
   };
 
+  const handleLoadingChange = (loading: boolean, operation?: 'pdf-generation' | 'file-processing') => {
+    setIsLoading(loading);
+    
+    if (loading && operation) {
+      setLoadingOperation(operation);
+      
+      // Clear any existing timeout
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+      
+      // Set a safety timeout to prevent infinite loading states
+      const timeout = setTimeout(() => {
+        setIsLoading(false);
+        setLoadingOperation(null);
+        handleError(
+          `${operation === 'pdf-generation' ? 'PDF generation' : 'File processing'} timed out. Please try again.`,
+          operation === 'pdf-generation' ? 'PDFGenerator' : 'MarkdownInput'
+        );
+      }, 60000); // 60 second timeout
+      
+      setLoadingTimeout(timeout);
+    } else if (!loading) {
+      setLoadingOperation(null);
+      
+      // Clear the timeout when loading completes normally
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        setLoadingTimeout(null);
+      }
+    }
+  };
+
   const handleError = (err: string | Error, component?: string) => {
+    // Ensure loading state is cleared when an error occurs
+    if (isLoading) {
+      setIsLoading(false);
+      setLoadingOperation(null);
+    }
+    
     const errorType = ErrorHandler.categorizeError(err);
     const enhancedError = ErrorHandler.createEnhancedError(
       err,
@@ -34,22 +75,56 @@ const App: React.FC = () => {
   };
 
   const handleRetry = () => {
-    setRetryCount(c => c + 1);
+    // Clear any existing loading states and errors before retry
+    setIsLoading(false);
+    setLoadingOperation(null);
     setError(null);
+    setRetryCount(c => c + 1);
   };
 
   const handleErrorBoundaryError = (error: EnhancedError) => {
     setError(error);
   };
 
+  // Cleanup timeout on component unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+    };
+  }, [loadingTimeout]);
+
   return (
     <ErrorBoundary onError={handleErrorBoundaryError}>
       <motion.div
-        className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-100 flex flex-col items-center p-4 font-sans"
+        className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-100 flex flex-col items-center p-4 font-sans relative"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.7 }}
       >
+        {isLoading && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-white/90 dark:bg-gray-800/90 rounded-2xl p-6 shadow-2xl flex items-center gap-4">
+              <svg className="animate-spin h-8 w-8 text-indigo-600 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              <div className="flex flex-col">
+                <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                  {loadingOperation === 'pdf-generation' && 'Generating PDF...'}
+                  {loadingOperation === 'file-processing' && 'Processing file...'}
+                  {!loadingOperation && 'Processing...'}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {loadingOperation === 'pdf-generation' && 'Converting your markdown to PDF format'}
+                  {loadingOperation === 'file-processing' && 'Reading and parsing your file'}
+                  {!loadingOperation && 'Please wait while we process your request'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className={
           `${darkMode ? 'dark' : ''}`
         }>
@@ -85,7 +160,12 @@ const App: React.FC = () => {
                 transition={{ duration: 0.7, delay: 0.3 }}
               >
                 <h2 className="text-xl font-semibold mb-4 text-indigo-700 dark:text-pink-400">Markdown Input</h2>
-                <MarkdownInput value={markdownContent} onChange={handleMarkdownChange} onError={handleError} />
+                <MarkdownInput 
+                  value={markdownContent} 
+                  onChange={handleMarkdownChange} 
+                  onError={handleError}
+                  onLoadingChange={handleLoadingChange}
+                />
               </motion.section>
               <motion.section
                 className="flex-1 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md rounded-2xl shadow-2xl p-6 flex flex-col transition-all duration-300 border border-white/40 dark:border-gray-700"
@@ -103,7 +183,13 @@ const App: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5 }}
             >
-              <PDFGenerator markdown={markdownContent} onError={handleError} key={retryCount} />
+              <PDFGenerator 
+                markdown={markdownContent} 
+                onError={handleError} 
+                onLoadingChange={handleLoadingChange}
+                isLoading={isLoading}
+                key={retryCount} 
+              />
               {error && <ErrorDisplay message={error.message} error={error} type={error.type} onRetry={handleRetry} />}
             </motion.div>
           </div>

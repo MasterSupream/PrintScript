@@ -15,9 +15,12 @@ import PDFGenerator from './PDFGenerator';
 
 describe('PDFGenerator Component', () => {
   const mockOnError = jest.fn();
+  const mockOnLoadingChange = jest.fn();
   const defaultProps = {
     markdown: '# Test Markdown',
-    onError: mockOnError
+    onError: mockOnError,
+    onLoadingChange: mockOnLoadingChange,
+    isLoading: false
   };
 
   beforeEach(() => {
@@ -32,7 +35,7 @@ describe('PDFGenerator Component', () => {
   });
 
   test('shows error when markdown is empty', () => {
-    render(<PDFGenerator markdown="" onError={mockOnError} />);
+    render(<PDFGenerator markdown="" onError={mockOnError} onLoadingChange={mockOnLoadingChange} isLoading={false} />);
     
     const button = screen.getByText(/Download as PDF/i);
     fireEvent.click(button);
@@ -52,7 +55,7 @@ describe('PDFGenerator Component', () => {
   });
 
   test('handles error when markdown contains error keyword', async () => {
-    render(<PDFGenerator markdown="# Test error content" onError={mockOnError} />);
+    render(<PDFGenerator markdown="# Test error content" onError={mockOnError} onLoadingChange={mockOnLoadingChange} isLoading={false} />);
     
     const button = screen.getByText(/Download as PDF/i);
     fireEvent.click(button);

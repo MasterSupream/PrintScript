@@ -8,10 +8,11 @@ interface PDFGeneratorProps {
   markdown: string;
   options?: object;
   onError: (error: string | Error, component?: string) => void;
+  onLoadingChange: (loading: boolean, operation?: 'pdf-generation' | 'file-processing') => void;
+  isLoading: boolean;
 }
 
-const PDFGenerator: React.FC<PDFGeneratorProps> = ({ markdown, options, onError }) => {
-  const [isLoading, setIsLoading] = useState(false);
+const PDFGenerator: React.FC<PDFGeneratorProps> = ({ markdown, options, onError, onLoadingChange, isLoading }) => {
   const [ripple, setRipple] = useState<{ x: number; y: number } | null>(null);
 
   const handleGeneratePDF = async () => {
@@ -19,17 +20,37 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ markdown, options, onError 
       onError('Markdown content is empty.', 'PDFGenerator');
       return;
     }
-    setIsLoading(true);
+    
+    // Start loading state for PDF generation
+    onLoadingChange(true, 'pdf-generation');
+    
     try {
       const requestData: GeneratePDFRequest = { markdown, options };
       const response = await axios.post(getApiUrl(API_ENDPOINTS.generatePDF), requestData, {
         responseType: 'blob',
+        timeout: 30000, // 30 second timeout for PDF generation
       });
+      
+      // Successful PDF generation
       saveAs(response.data as Blob, 'document.pdf');
+      
     } catch (err: any) {
-      onError(err?.response?.data?.error || err || 'Failed to generate PDF.', 'PDFGenerator');
+      // Enhanced error handling during loading state
+      const errorMessage = err?.response?.data?.error || err?.message || 'Failed to generate PDF.';
+      
+      // Handle specific error scenarios during PDF generation
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        onError('PDF generation timed out. Please try again with shorter content.', 'PDFGenerator');
+      } else if (err?.response?.status >= 500) {
+        onError('Server error during PDF generation. Please try again later.', 'PDFGenerator');
+      } else if (err?.response?.status === 413) {
+        onError('Content too large for PDF generation. Please reduce the markdown size.', 'PDFGenerator');
+      } else {
+        onError(errorMessage, 'PDFGenerator');
+      }
     } finally {
-      setIsLoading(false);
+      // Always ensure loading state is cleared, even in error scenarios
+      onLoadingChange(false);
     }
   };
 

@@ -5,10 +5,12 @@ import MarkdownInput from './MarkdownInput';
 describe('MarkdownInput Component', () => {
   const mockOnChange = jest.fn();
   const mockOnError = jest.fn();
+  const mockOnLoadingChange = jest.fn();
   const defaultProps = {
     value: '',
     onChange: mockOnChange,
-    onError: mockOnError
+    onError: mockOnError,
+    onLoadingChange: mockOnLoadingChange
   };
 
   beforeEach(() => {

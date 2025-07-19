@@ -5,9 +5,10 @@ interface MarkdownInputProps {
   value: string;
   onChange: (value: string) => void;
   onError: (error: string | Error, component?: string) => void;
+  onLoadingChange: (loading: boolean, operation?: 'pdf-generation' | 'file-processing') => void;
 }
 
-const MarkdownInput: React.FC<MarkdownInputProps> = ({ value, onChange, onError }) => {
+const MarkdownInput: React.FC<MarkdownInputProps> = ({ value, onChange, onError, onLoadingChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -17,6 +18,7 @@ const MarkdownInput: React.FC<MarkdownInputProps> = ({ value, onChange, onError 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (!ext || !ALLOWED_FILE_TYPES.includes(ext)) {
       onError('Invalid file type. Please upload a .md or .markdown file.', 'MarkdownInput');
@@ -26,13 +28,17 @@ const MarkdownInput: React.FC<MarkdownInputProps> = ({ value, onChange, onError 
       onError(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`, 'MarkdownInput');
       return;
     }
+    
+    onLoadingChange(true, 'file-processing');
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
       onChange(text);
+      onLoadingChange(false);
     };
     reader.onerror = () => {
       onError('Failed to read file.', 'MarkdownInput');
+      onLoadingChange(false);
     };
     reader.readAsText(file);
   };
