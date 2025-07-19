@@ -1,3 +1,5 @@
+import { ConversionOptions } from './ConversionOptions';
+
 export interface GeneratePDFRequest {
   markdown: string;
   options?: ConversionOptions;
@@ -8,6 +10,4 @@ export interface GeneratePDFResponse {
   htmlContent?: string;
   message?: string;
   error?: string;
-}
-
-import { ConversionOptions } from './ConversionOptions'; 
+} 
