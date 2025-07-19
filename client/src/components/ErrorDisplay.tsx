@@ -92,25 +92,27 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   };
 
   return (
-    <div className={`${getErrorSeverityClasses(type)} border px-6 py-4 rounded-xl shadow-lg mt-4 animate-fade-in`}>
-      <div className="flex items-start gap-3">
-        {getErrorIcon(type)}
+    <div className={`${getErrorSeverityClasses(type)} border px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl shadow-lg mt-4 animate-fade-in max-w-full`}>
+      <div className="flex items-start gap-2 sm:gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          {getErrorIcon(type)}
+        </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">{message}</span>
-            <div className="flex items-center gap-2 ml-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span className="font-medium text-sm sm:text-base pr-2 break-words">{message}</span>
+            <div className="flex items-center gap-2 flex-shrink-0">
               {error?.details && (
                 <button
                   onClick={() => setDetailsExpanded(!detailsExpanded)}
-                  className="text-sm underline hover:no-underline focus:outline-none"
+                  className="text-xs sm:text-sm underline hover:no-underline focus:outline-none whitespace-nowrap"
                   aria-label={detailsExpanded ? "Hide details" : "Show details"}
                 >
-                  {detailsExpanded ? 'Hide Details' : 'Details'}
+                  {detailsExpanded ? 'Hide' : 'Details'}
                 </button>
               )}
               <button
                 onClick={() => setVisible(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold focus:outline-none"
+                className="text-gray-400 hover:text-gray-600 text-lg sm:text-xl font-bold focus:outline-none w-6 h-6 flex items-center justify-center"
                 aria-label="Dismiss error"
               >
                 ×
