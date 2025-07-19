@@ -5,7 +5,8 @@ export interface GeneratePDFRequest {
 
 export interface GeneratePDFResponse {
   success: boolean;
-  pdfUrl?: string;
+  htmlContent?: string;
+  message?: string;
   error?: string;
 }
 
