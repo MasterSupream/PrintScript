@@ -37,11 +37,49 @@
   animation: ripple 0.5s linear;
 }
 
-@media (max-width: 768px) {
+/* Mobile and responsive improvements */
+@media (max-width: 640px) {
   .markdown-input, .markdown-preview {
     min-width: 0;
+    padding: 0.75rem !important;
+    font-size: 0.875rem;
+  }
+  
+  /* Improve touch targets on mobile */
+  button, input[type="file"] + label {
+    min-height: 44px;
+  }
+  
+  /* Better spacing on mobile */
+  .prose {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .prose h1 {
+    font-size: 1.5rem;
+  }
+  
+  .prose h2 {
+    font-size: 1.25rem;
+  }
+  
+  .prose h3 {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .markdown-input, .markdown-preview {
     padding: 1rem !important;
-    font-size: 1rem;
+    font-size: 0.9375rem;
+  }
+}
+
+/* Improved scrollbar for better UX */
+@media (hover: hover) {
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6366f1;
   }
 }
 
