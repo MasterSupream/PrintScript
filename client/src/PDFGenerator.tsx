@@ -27,12 +27,29 @@ const PDFGenerator: React.FC<PDFGeneratorProps> = ({ markdown, options, onError,
     try {
       const requestData: GeneratePDFRequest = { markdown, options };
       const response = await axios.post(getApiUrl(API_ENDPOINTS.generatePDF), requestData, {
-        responseType: 'blob',
         timeout: 30000, // 30 second timeout for PDF generation
       });
       
-      // Successful PDF generation
-      saveAs(response.data as Blob, 'document.pdf');
+      // Check if response contains HTML content
+      if (response.data && response.data.success && response.data.htmlContent) {
+        // Create a new window/tab with the formatted HTML
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(response.data.htmlContent);
+          newWindow.document.close();
+          // Focus the new window
+          newWindow.focus();
+        } else {
+          // Fallback if popup is blocked - create a blob and open it
+          const blob = new Blob([response.data.htmlContent], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          // Clean up the URL after a delay
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+      } else {
+        throw new Error('Invalid response format from server');
+      }
       
     } catch (err: any) {
       // Enhanced error handling during loading state
