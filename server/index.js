@@ -21,7 +21,15 @@ const helmet_1 = __importDefault(require("helmet"));
 const xss_1 = __importDefault(require("xss"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
-app.use((0, cors_1.default)());
+// Configure CORS for production
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production'
+        ? [process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '', 'https://*.vercel.app']
+        : ['http://localhost:3000', 'http://localhost:3001'],
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json({ limit: '2mb' }));
 app.use((0, helmet_1.default)());
 const limiter = (0, express_rate_limit_1.default)({
@@ -51,7 +59,19 @@ app.post('/api/generate-pdf', (req, res) => __awaiter(void 0, void 0, void 0, fu
         // Convert Markdown to HTML
         const html = yield Promise.resolve(marked_1.default.parse(safeMarkdown));
         // Launch Puppeteer and generate PDF
-        const browser = yield puppeteer_1.default.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        const browser = yield puppeteer_1.default.launch({
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu'
+            ],
+            headless: true
+        });
         const page = yield browser.newPage();
         yield page.setContent(html, { waitUntil: 'networkidle0' });
         const pdfBuffer = yield page.pdf({
