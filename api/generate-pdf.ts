@@ -168,9 +168,13 @@ export default async function handler(req: any, res: any) {
       </html>
     `;
 
-    // Return HTML for browser-based PDF generation
-    res.setHeader("Content-Type", "text/html");
-    return res.send(styledHtml);
+    // Return success response with HTML URL for frontend to handle
+    return res.status(200).json({
+      success: true,
+      htmlContent: styledHtml,
+      message: "HTML content generated successfully"
+    });
+
   } catch (error) {
     console.error("PDF generation error:", error);
     return res.status(500).json({
